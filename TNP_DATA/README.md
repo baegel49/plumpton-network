@@ -1,34 +1,47 @@
-### Tudor Networks of Power - Correspondence Network Dataset
+### Plumpton Letters and Papers - Network Dataset (Kirby edition)
 
-Ruth Ahnert, Sebastian E. Ahnert, Jose Cree, and Lotte Fikkers
+Derived from Joan Kirby (ed.), *The Plumpton Letters and Papers*
+(Camden Fifth Series, vol. 8, Cambridge University Press, 1996).
 
-© 2023. This work is licensed under a CC BY-NC-SA 4.0 license. 
-
----
-
-**If using this dataset, please cite:**
-
-- R. Ahnert, S E. Ahnert, "Tudor Networks of Power", Oxford University Press, 2023.
-
-- R. Ahnert, S. E. Ahnert, J. Cree, & L. Fikkers, "Tudor Networks of Power - correspondence network dataset". Apollo - University of Cambridge Repository (2023). https://doi.org/10.17863/CAM.99562
+Format follows Ahnert & Ahnert, *Tudor Networks of Power* (OUP, 2023).
 
 ---
 
-The data is released under a Creative Commons BY-NC-SA 4.0 license, which:
-- requires attribution
-- permits distribution, remixing, adaptation, or building upon this data as long as the modified material is licensed under identical terms
-- only permits non-commercial uses of the work
+**Scope**: 230 letters extracted (of 252 total in Kirby), c.1450–1552.
 
-This data contains a temporal, directed edgelist representing (to the best of our knowledge) all items of correspondence in the Tudor State Papers (1509-1603), which are the official government records of the Tudor period in England. The data covers State Papers Domestic and Foreign.
+**Files**:
+- `letter_edgelist.tsv` — Directed temporal edge list (230 letters)
+- `people_labels.tsv` — Person ID → Name (125 individuals)
+- `places_labels.tsv` — Place ID → Name (30 places)
+- `places_metadata.tsv` — Place ID, latitude, longitude
 
-The dataset was created by first extracting the relevant XML metadata of the State Papers Online resource developed by Gale Cengage. We would like to acknowledge the help and support that Gale Cengage provided for our research. The XML metadata closely corresponds to the State Papers Calendars of the 19th century. These contain many ambiguities regarding the identities of people and places, resulting in an extensive effort on our part to disambiguate and de-duplicate person identities and places of writing. The details of this process can be found in our book (see citation above).
+**Date encoding**: Days since 1 January 1400. Value of 0 = unknown date.
 
-The dataset contains:
+**Known limitations**:
+- 22 letters (of 252) not captured due to OCR noise in header lines.
+- Place of writing is not yet extracted (PLACE_ID = 0 for all).
+  Extractable from full letter text in a second pass.
+- A small number of letter numbers are OCR-garbled (e.g. "7" read as "4").
+- Earl of Northumberland not disambiguated by individual (4th vs 5th Earl).
+  Could be split using date ranges: 4th Earl d.1489, 5th Earl 1489–1527.
+- Some approximate dates assigned to 1 Jan of the estimated year.
 
-- `letter_edgelist.tsv`	- Directed temporal edge list of letters
-- `people_labels.tsv`	- Key for the person IDs used in letter_edgelist.tsv
-- `place_labels.tsv` - Key for the place IDs used in letter_edgelist.tsv
-- `people_metadata.tsv`	- Additional metadata and URIs for a subset of people
-- `places_metadata.tsv`	- Geolocations and metadata for a large subset of places
+**Key actors** (by frequency):
+- Sir Robert Plumpton (recipient of 153 letters)
+- Sir William Plumpton (recipient of 27 letters)
+- William Plumpton, son (25 letters, as sender or recipient)
+- Earl of Northumberland (24 letters as sender)
+- Edward Plumpton (20 letters as sender)
+- Dame Agnes Plumpton (11 letters)
+- Isabel Plumpton, née Babthorpe (11 letters)
+- Robert Plumpton, kinsman (9 letters)
+- German de la Pole (8 letters)
+- Sir William Gascoigne (8 letters)
+- Godfrey Greene (7 letters)
+- Robert Eyre III (6 letters)
 
-Both the code and more extensive datasets that give context to the data curation process, the network analysis methods, and quantitative results in the book can be found other subdirectories of this repository.
+**Citation**:
+Kirby, J. (ed.), *The Plumpton Letters and Papers*
+(Camden Fifth Series, vol. 8, Royal Historical Society, 1996).
+
+**Generation script**: `build_plumpton_v2.py`
