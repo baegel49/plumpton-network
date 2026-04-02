@@ -12,7 +12,7 @@ import time
 from collections import defaultdict
 from bottle import route, run, template, request
 
-current = '25959'
+current = '96'
 view = 'indiv'
 period = 'all'
 item = 2
@@ -37,10 +37,10 @@ meas[8] = 'Eigenvector cent. rank'
 meas[9] = 'Betweenness rank'
 
 monfull = {}
-monfull['hen'] = 'Henry VIII'
-monfull['edw'] = 'Edward VI'
-monfull['mar'] = 'Mary I'
-monfull['eli'] = 'Elizabeth I'
+monfull['hen'] = 'Early (1450-1489)'
+monfull['edw'] = 'Middle (1489-1520)'
+monfull['mar'] = 'Late (1520-1552)'
+monfull['eli'] = 'Wars of the Roses (1455-1487)'
 monfull['all'] = 'All'
 monfull['cus'] = 'Custom'
 
@@ -109,7 +109,7 @@ def printxmlhtml(xml):
 
 def display(current,frll,toll,name,msg,period,xmlprint,image):
     global link
-    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle2.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Tudor Networks of Power</b></div>'
+    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle2.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Plumpton Networks</b></div>'
     #print(current,frl,tol)
     s += '<div class="current">'+'<br>'#+msg+'<p>'
     s += '<b>'+name[current]+' ['+current+'] </b>'
@@ -131,6 +131,7 @@ def display(current,frll,toll,name,msg,period,xmlprint,image):
     s += '<a href="/edge">Edge list</a><p>'
     s += '<a href="/similar='+str(current)+'">Show individuals with similar network profile</a><p>'
     s += '<a href="/xmlprint='+str(current)+'$">View all this person\'s correspondence</a><p>'
+    s += '<a href="/graph='+str(current)+'" target="_blank">View network graph</a><p>'
     s += '<b>Current period:</b> '+str(monfull[period])
     if period != 'all':
         s += ' ('+str(mfdate[period])+'-'+str(mtdate[period])+')'
@@ -279,10 +280,25 @@ def display(current,frll,toll,name,msg,period,xmlprint,image):
             ss = ''
             sstxt = ''
             ssim = ''
+            xmlpath = xml.get(i, '-') if '@' not in xmlprint else str(i)
+            if xmlpath == '-' or not os.path.exists(xmlpath):
+                # No XML files available (e.g. Plumpton data) - show basic info
+                ss += '<p><a name="'+str(mcount)+'"></a>'
+                ss += '<b>Letter:</b> '+str(llink[i][4])+'<br>'
+                ss += '<b>Date:</b> '+str(fdate.get(i,'?'))+' - '+str(tdate.get(i,'?'))+'<br>'
+                ss += '<b>From:</b> '+str(name.get(sen.get(i,'?'),'?'))+'<br>'
+                ss += '<b>To:</b> '+str(name.get(rec.get(i,'?'),'?'))+'<br>'
+                if len(llink[i]) > 7:
+                    ss += '<b>Reference:</b> '+str(llink[i][7])+'<br>'
+                if len(llink[i]) > 5:
+                    ss += '<b>Place:</b> '+str(llink[i][5])+'<br>'
+                mcount += 1
+                s += '<div class="letter">'+ss+'</div>'
+                continue
             if '@' not in xmlprint:
-                f = open('<INSERT PATH TO SPO XML FILES>'+xml[i])
+                f = open(xmlpath)
             if '@' in xmlprint:
-                f = open('<INSERT PATH TO SPO XML FILES>'+str(i))
+                f = open(xmlpath)
             out = 0
             count = 0
             #linklist = []
@@ -417,27 +433,13 @@ def display(current,frll,toll,name,msg,period,xmlprint,image):
             s += '<div class="next"><a href="/image='+str(int(imagetuple[0]))+'_'+str(int(imagetuple[1])+1)+'">next</a></div>'
         s += '</div>'
 
-    """
-    floc = open('local.dot','w')
-    floc.write('digraph floc\n{\n')
-    tmpnet = net[period].subgraph(list(set(net[period].successors(current)).union(set(net[period].predecessors(current)))))
-    for i in tmpnet.nodes():
-        if i != current:
-            floc.write('node "'+str(i)+'" [label="",shape="circle",color="black",style="filled"];\n')
-    for i in tmpnet.edges():
-        if current not in [i[0],i[1]]:
-            floc.write('"'+str(i[0])+'" -> "'+str(i[1])+'";\n')
-    floc.write('}\n')
-    floc.close()
-    os.system('neato local.dot -Tjpg -Goverlap=scale > local.jpg')
-    """
     s += '<div class="searchbox"><form action="/search" method=POST><input type="text" size="10" name="search"><input type="submit" name="submit" value="Search">'#<input type="radio" name="logic" value="AND" '+str(checked1)+'>AND<input type="radio" name="logic" value="OR" '+str(checked2)+'>OR</form></div>'
     s += '</form></div>'
     return s
     
 
 def displaylist(item,name,period,xmlprint):
-    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle2.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Tudor Networks of Power</b></div>'
+    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle2.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Plumpton Networks</b></div>'
     s += '<div class="biglist">'
     s += '<b>Current period: </b>'+str(monfull[period])
     if period != 'all':
@@ -589,7 +591,7 @@ def reldist(r1,r2,n):
     return math.sqrt(d)
     
 def displaysimilar(item,name,period,xmlprint,current):
-    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle2.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Tudor Networks of Power</b></div>'
+    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle2.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Plumpton Networks</b></div>'
     s += '<div class="biglist">'
     s += '<b>Current period: </b>'+str(monfull[period])
     if period != 'all':
@@ -662,7 +664,7 @@ def displaysimilar(item,name,period,xmlprint,current):
 
 
 def displayedgelist(item,name,period,xmlprint):
-    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Tudor Networks of Power</b></div>'
+    s = '<html><head><STYLE type = \"text/css\" media = \"screen\"\n<!--\n\-->\n</STYLE><LINK HREF=\"static/interfacestyle.css\" rel=\"stylesheet\" type=\"text/css\" media=\"all\" title=\"Standard\"></head><div class="title"><b>Plumpton Networks</b></div>'
     s += '<div class="biglist">'
     s += '<b>Current period: </b>'+str(monfull[period])
     if period != 'all':
@@ -945,27 +947,28 @@ print('Loading data...')
 
 mfdate = {}
 mtdate = {}
-mfdate['hen'] = '15090421'
-mtdate['hen'] = '15470128'
-mfdate['edw'] = '15470128'
-mtdate['edw'] = '15530706'
-mfdate['mar'] = '15530706'
-mtdate['mar'] = '15581117'
-mfdate['eli'] = '15581117'
-mtdate['eli'] = '16030324'
+mfdate['hen'] = '14500101'
+mtdate['hen'] = '14890101'
+mfdate['edw'] = '14890101'
+mtdate['edw'] = '15200101'
+mfdate['mar'] = '15200101'
+mtdate['mar'] = '15520101'
+mfdate['eli'] = '14550101'
+mtdate['eli'] = '14870101'
 mfdate['all'] = '10000000'
 mtdate['all'] = '20000000'
 mfdate['cus'] = '10000000'
 mtdate['cus'] = '10000000' #EMPTY TO START WITH
 
 monarchs = ['hen','edw','mar','eli','all']
-fp = open('period')
-for line in fp:
-    l = line.strip().split()
-    mfdate[l[0]] = l[1]
-    mtdate[l[0]] = l[2] 
-    monarchs.append(l[0])
-fp.close()
+if os.path.exists('period'):
+    fp = open('period')
+    for line in fp:
+        l = line.strip().split()
+        mfdate[l[0]] = l[1]
+        mtdate[l[0]] = l[2]
+        monarchs.append(l[0])
+    fp.close()
 
 for i in monarchs:
     if i not in monfull:
@@ -1064,8 +1067,30 @@ bigedgerank = {}
 
 recalculate = 0
 
+if not os.path.exists('bigrank.out') or not os.path.exists('bigedgerank.out'):
+    recalculate = 1
+
 if recalculate == 1:
     for i in monarchs:
+        if net[i].number_of_nodes() == 0:
+            print('Skipping empty network: '+str(i))
+            degrank[i] = {}
+            idegrank[i] = {}
+            odegrank[i] = {}
+            wdegrank[i] = {}
+            widegrank[i] = {}
+            wodegrank[i] = {}
+            wrank[i] = {}
+            eigrank[i] = {}
+            betwrank[i] = {}
+            edgebetwrank[i] = {}
+            eig[i] = {}
+            betw[i] = {}
+            edgebetw[i] = {}
+            bigrank[i] = []
+            bigedgerank[i] = []
+            rankvec[i] = {}
+            continue
         degrank[i] = {}
         idegrank[i] = {}
         odegrank[i] = {}
@@ -1080,27 +1105,27 @@ if recalculate == 1:
         print('Ranking '+str(i))
     
         sd = sorted(dict(net[i].degree()).values(),reverse=True)
-        for j in sorted(net[i].degree().items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].degree()).items(),key=operator.itemgetter(1),reverse=True):
             degrank[i][j[0]] = sd.index(j[1])+1
         
         sid = sorted(dict(net[i].in_degree()).values(),reverse=True)
-        for j in sorted(net[i].in_degree().items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].in_degree()).items(),key=operator.itemgetter(1),reverse=True):
             idegrank[i][j[0]] = sid.index(j[1])+1
         
         sod = sorted(dict(net[i].out_degree()).values(),reverse=True)
-        for j in sorted(net[i].out_degree().items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].out_degree()).items(),key=operator.itemgetter(1),reverse=True):
             odegrank[i][j[0]] = sod.index(j[1])+1
         
         swd = sorted(dict(net[i].degree(weight='w')).values(),reverse=True)
-        for j in sorted(net[i].degree(weight='w').items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].degree(weight='w')).items(),key=operator.itemgetter(1),reverse=True):
             wdegrank[i][j[0]] = swd.index(j[1])+1
         
         swid = sorted(dict(net[i].in_degree(weight='w')).values(),reverse=True)
-        for j in sorted(net[i].in_degree(weight='w').items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].in_degree(weight='w')).items(),key=operator.itemgetter(1),reverse=True):
             widegrank[i][j[0]] = swid.index(j[1])+1
         
         swod = sorted(dict(net[i].out_degree(weight='w')).values(),reverse=True)
-        for j in sorted(net[i].out_degree(weight='w').items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].out_degree(weight='w')).items(),key=operator.itemgetter(1),reverse=True):
             wodegrank[i][j[0]] = swod.index(j[1])+1
 
         weights = {}
@@ -1114,7 +1139,11 @@ if recalculate == 1:
         betw[i] = networkx.betweenness_centrality(net[i])
     
         print('Eigenvector centrality...')
-        eig[i] = networkx.eigenvector_centrality(net[i])
+        try:
+            eig[i] = networkx.eigenvector_centrality(net[i], max_iter=1000)
+        except networkx.exception.PowerIterationFailedConvergence:
+            print('  Warning: eigenvector centrality did not converge for '+str(i)+', using numpy fallback')
+            eig[i] = networkx.eigenvector_centrality_numpy(net[i])
 
         print('Edge betweenness...')
         edgebetw[i] = networkx.edge_betweenness_centrality(net[i])
@@ -1326,6 +1355,25 @@ if recalculate == 0:
 
 if recalculate == 0 and len(recalcset) > 0:
     for i in recalcset:
+        if net[i].number_of_nodes() == 0:
+            print('Skipping empty network: '+str(i))
+            degrank[i] = {}
+            idegrank[i] = {}
+            odegrank[i] = {}
+            wdegrank[i] = {}
+            widegrank[i] = {}
+            wodegrank[i] = {}
+            wrank[i] = {}
+            eigrank[i] = {}
+            betwrank[i] = {}
+            edgebetwrank[i] = {}
+            eig[i] = {}
+            betw[i] = {}
+            edgebetw[i] = {}
+            bigrank[i] = []
+            bigedgerank[i] = []
+            rankvec[i] = {}
+            continue
         degrank[i] = {}
         idegrank[i] = {}
         odegrank[i] = {}
@@ -1340,27 +1388,27 @@ if recalculate == 0 and len(recalcset) > 0:
         print('Ranking '+str(i))
     
         sd = sorted(dict(net[i].degree()).values(),reverse=True)
-        for j in sorted(net[i].degree().items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].degree()).items(),key=operator.itemgetter(1),reverse=True):
             degrank[i][j[0]] = sd.index(j[1])+1
         
         sid = sorted(dict(net[i].in_degree()).values(),reverse=True)
-        for j in sorted(net[i].in_degree().items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].in_degree()).items(),key=operator.itemgetter(1),reverse=True):
             idegrank[i][j[0]] = sid.index(j[1])+1
         
         sod = sorted(dict(net[i].out_degree()).values(),reverse=True)
-        for j in sorted(net[i].out_degree().items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].out_degree()).items(),key=operator.itemgetter(1),reverse=True):
             odegrank[i][j[0]] = sod.index(j[1])+1
         
         swd = sorted(dict(net[i].degree(weight='w')).values(),reverse=True)
-        for j in sorted(net[i].degree(weight='w').items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].degree(weight='w')).items(),key=operator.itemgetter(1),reverse=True):
             wdegrank[i][j[0]] = swd.index(j[1])+1
         
         swid = sorted(dict(net[i].in_degree(weight='w')).values(),reverse=True)
-        for j in sorted(net[i].in_degree(weight='w').items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].in_degree(weight='w')).items(),key=operator.itemgetter(1),reverse=True):
             widegrank[i][j[0]] = swid.index(j[1])+1
         
         swod = sorted(dict(net[i].out_degree(weight='w')).values(),reverse=True)
-        for j in sorted(net[i].out_degree(weight='w').items(),key=operator.itemgetter(1),reverse=True):
+        for j in sorted(dict(net[i].out_degree(weight='w')).items(),key=operator.itemgetter(1),reverse=True):
             wodegrank[i][j[0]] = swod.index(j[1])+1
 
         weights = {}
@@ -1374,7 +1422,11 @@ if recalculate == 0 and len(recalcset) > 0:
         betw[i] = networkx.betweenness_centrality(net[i])
     
         print('Eigenvector centrality...')
-        eig[i] = networkx.eigenvector_centrality(net[i])
+        try:
+            eig[i] = networkx.eigenvector_centrality(net[i], max_iter=1000)
+        except networkx.exception.PowerIterationFailedConvergence:
+            print('  Warning: eigenvector centrality did not converge for '+str(i)+', using numpy fallback')
+            eig[i] = networkx.eigenvector_centrality_numpy(net[i])
 
         print('Edge betweenness...')
         edgebetw[i] = networkx.edge_betweenness_centrality(net[i])
@@ -1436,16 +1488,49 @@ if recalculate == 1 or len(recalcset) > 0:
 from bottle import static_file
 @route('/static/<filename>')
 def server_static(filename):
-    return static_file(filename, root='<INSERT PATH TO STATIC DIRECTORY>/static')
+    return static_file(filename, root='./static')
 
 @route('/static/<filepath:path>')
-def server_static(filepath):
-    return static_file(filepath, root='<INSERT PATH TO STATIC DIRECTORY/static')
+def server_static_path(filepath):
+    return static_file(filepath, root='./static')
 
 @route('/')
 def hello():
     global current,name,frl,tol
     return display(current,frl[period][current],tol[period][current],name,'Welcome!',period,xmlprint,image)
+
+@route('/graph=<person_id>')
+def graph_view(person_id='None'):
+    import time as _time
+    global net, period, name, current
+    current = person_id
+    # Generate the graph
+    floc = open('local.dot','w')
+    floc.write('digraph floc\n{\n')
+    floc.write('node [fontsize=14];\n')
+    floc.write('edge [color="#999999"];\n')
+    neighbors = list(set(net[period].successors(current)).union(set(net[period].predecessors(current))))
+    neighbors_and_current = list(set(neighbors + [current]))
+    tmpnet = net[period].subgraph(neighbors_and_current)
+    for i in tmpnet.nodes():
+        nlabel = name.get(i, i)
+        if i == current:
+            floc.write('"'+str(i)+'" [label="'+str(nlabel)+'",shape="box",color="red",style="filled",fillcolor="#ffcccc",fontsize=16];\n')
+        else:
+            floc.write('"'+str(i)+'" [label="'+str(nlabel)+'",shape="ellipse",color="black",style="filled",fillcolor="#ccccff"];\n')
+    for i in tmpnet.edges():
+        w = tmpnet.get_edge_data(*i).get('w', 1)
+        floc.write('"'+str(i[0])+'" -> "'+str(i[1])+'" [penwidth='+str(min(w, 5))+'];\n')
+    floc.write('}\n')
+    floc.close()
+    os.system('/opt/homebrew/bin/neato local.dot -Tpng -Goverlap=scale -Gsize="16,12" -Gdpi=150 > static/local.png')
+    s = '<html><head><title>Network Graph - '+name.get(current, current)+'</title></head>'
+    s += '<body style="background:#fff;margin:0;padding:20px;text-align:center;">'
+    s += '<h2 style="font-family:helvetica,arial,sans-serif;">Network: '+name.get(current, current)+'</h2>'
+    s += '<p style="font-family:helvetica,arial,sans-serif;font-size:10pt;"><a href="/current='+str(current)+'">Back to details</a></p>'
+    s += '<img src="/static/local.png?t='+str(int(_time.time()))+'" style="max-width:100%;border:1px solid #ccc;">'
+    s += '</body></html>'
+    return s
 
 @route('/current=<currenttmp>')
 def execcom(currenttmp='None'):
